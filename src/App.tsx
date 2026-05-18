@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-// Estrutura de dados avançada para múltiplas séries por exercício
+// Estrutura de dados avançada com tipagem de série técnica
 interface SerieData {
   carga: string;
   reps: string;
+  type: "WORK" | "FEEDER" | "TOP"; // Controle de zona de esforço
 }
 
 interface ExerciseData {
@@ -20,10 +21,10 @@ interface LogEntry {
 
 interface ProtocolExercise {
   name: string;
-  seriesTarget: number; // Número exato de linhas de séries que serão geradas
+  seriesTarget: number;
   repsTarget: string;
   note: string;
-  isTimeBased?: boolean; // Define se o rótulo muda para segundos
+  isTimeBased?: boolean;
 }
 
 const PROTOCOLO_TREINOS: Record<string, ProtocolExercise[]> = {
@@ -73,7 +74,7 @@ const PROTOCOLO_TREINOS: Record<string, ProtocolExercise[]> = {
 };
 
 const TREINO_KEYS = Object.keys(PROTOCOLO_TREINOS);
-const STORAGE_KEY = "jmr_logs_v4"; // Incrementado para isolar a nova matriz de séries
+const STORAGE_KEY = "jmr_logs_v5"; // Incrementado para evitar incompatibilidade com matrizes antigas
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -123,7 +124,7 @@ export default function App() {
     PROTOCOLO_TREINOS[selectedTreino].forEach((ex) => {
       const seriesArray: SerieData[] = [];
       for (let s = 0; s < ex.seriesTarget; s++) {
-        seriesArray.push({ carga: "", reps: "" });
+        seriesArray.push({ carga: "", reps: "", type: "WORK" });
       }
       blank[ex.name] = { series: seriesArray, obs: "" };
     });
@@ -131,14 +132,40 @@ export default function App() {
     setSaved(false);
   }, [selectedTreino]);
 
-  function handleSerieChange(exercise: string, index: number, field: keyof SerieData, value: string) {
+  function handleSerieChange(exercise: string, index: number, field: keyof SerieData, value: any) {
     setEntries((prev) => {
       const currentEx = prev[exercise];
+      if (!currentEx) return prev;
       const updatedSeries = [...currentEx.series];
       updatedSeries[index] = { ...updatedSeries[index], [field]: value };
+      return { ...prev, [exercise]: { ...currentEx, series: updatedSeries } };
+    });
+  }
+
+  function handleAddExtraSerie(exercise: string) {
+    setEntries((prev) => {
+      const currentEx = prev[exercise];
+      if (!currentEx) return prev;
       return {
         ...prev,
-        [exercise]: { ...currentEx, series: updatedSeries },
+        [exercise]: {
+          ...currentEx,
+          series: [...currentEx.series, { carga: "", reps: "", type: "FEEDER" }]
+        }
+      };
+    });
+  }
+
+  function handleRemoveSerie(exercise: string, index: number) {
+    setEntries((prev) => {
+      const currentEx = prev[exercise];
+      if (!currentEx || currentEx.series.length <= 1) return prev;
+      return {
+        ...prev,
+        [exercise]: {
+          ...currentEx,
+          series: currentEx.series.filter((_, i) => i !== index)
+        }
       };
     });
   }
@@ -190,7 +217,7 @@ export default function App() {
           <tr style="border-bottom: 1px solid #ddd;">
             <td style="padding: 10px; font-weight: bold; color: #555; text-align: center;">${idx === 0 ? String(i + 1).padStart(2, '0') : ''}</td>
             <td style="padding: 10px; font-weight: bold; color: #111;">${idx === 0 ? exName.toUpperCase() : ''}</td>
-            <td style="padding: 10px; text-align: center; font-weight: bold; color: #c0392b;">SÉRIE ${idx + 1}</td>
+            <td style="padding: 10px; text-align: center; font-weight: bold; color: #c0392b;">SÉRIE ${idx + 1} (${s.type})</td>
             <td style="padding: 10px; text-align: center;">${cg}</td>
             <td style="padding: 10px; text-align: center;">${rp}</td>
             <td style="padding: 10px; font-style: italic; color: #555; font-size: 11px;">${idx === 0 ? (data.obs || '—') : ''}</td>
@@ -220,7 +247,7 @@ export default function App() {
           <div class="header">
             <div>
               <span class="logo">JMR <span style="color:#111">TEAM</span></span>
-              <p class="title" style="margin-top: 5px;">PROTOCOLO LD · RELATÓRIO DETALHADO POR SÉRIE</p>
+              <p class="title" style="margin-top: 5px;">PROTOCOLO LD · RELATÓRIO TÉCNICO COMPLETO</p>
             </div>
             <div style="text-align: right; font-size: 12px; color: #555; font-weight: bold;">GERADO EM: ${new Date(log.date).toLocaleDateString('pt-BR')}</div>
           </div>
@@ -234,10 +261,10 @@ export default function App() {
               <tr>
                 <th style="width: 6%; text-align: center;">SEQ</th>
                 <th style="width: 34%;">EXERCÍCIO ESCALADO</th>
-                <th style="width: 15%; text-align: center;">PARCIAL</th>
-                <th style="width: 15%; text-align: center;">CARGA</th>
-                <th style="width: 15%; text-align: center;">VOLUME / TEMPO</th>
-                <th style="width: 15%;">OBSERVAÇÕES</th>
+                <th style="width: 18%; text-align: center;">ESTRATÉGIA</th>
+                <th style="width: 14%; text-align: center;">CARGA</th>
+                <th style="width: 14%; text-align: center;">VOLUME</th>
+                <th style="width: 14%;">OBSERVAÇÕES</th>
               </tr>
             </thead>
             <tbody>${rowsHTML}</tbody>
@@ -293,6 +320,8 @@ export default function App() {
             setSelectedTreino={setSelectedTreino}
             entries={entries}
             handleSerieChange={handleSerieChange}
+            handleAddExtraSerie={handleAddExtraSerie}
+            handleRemoveSerie={handleRemoveSerie}
             handleObsChange={handleObsChange}
             handleSave={handleSave}
             saved={saved}
@@ -362,7 +391,9 @@ interface RegisterProps {
   selectedTreino: string;
   setSelectedTreino: (t: string) => void;
   entries: Record<string, ExerciseData>;
-  handleSerieChange: (ex: string, idx: number, f: keyof SerieData, v: string) => void;
+  handleSerieChange: (ex: string, idx: number, f: keyof SerieData, v: any) => void;
+  handleAddExtraSerie: (ex: string) => void;
+  handleRemoveSerie: (ex: string, index: number) => void;
   handleObsChange: (ex: string, v: string) => void;
   handleSave: () => void;
   saved: boolean;
@@ -370,7 +401,7 @@ interface RegisterProps {
   logs: LogEntry[];
 }
 
-function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSerieChange, handleObsChange, handleSave, saved, saving, logs }: RegisterProps) {
+function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSerieChange, handleAddExtraSerie, handleRemoveSerie, handleObsChange, handleSave, saved, saving, logs }: RegisterProps) {
   const prevLog = logs.find((l) => l.treino === selectedTreino);
 
   return (
@@ -398,59 +429,74 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSeri
             <div key={ex.name} style={s.exerciseCard}>
               <div style={s.exHeader}>
                 <span style={s.exNum}>{String(i + 1).padStart(2, "0")}</span>
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={s.exName}>{ex.name.toUpperCase()}</span>
                   <span style={{ fontSize: 10, color: RED, fontWeight: 700, letterSpacing: 0.5 }}>
-                    🎯 TARGET: {ex.seriesTarget} SÉRIES × {ex.repsTarget} {ex.isTimeBased ? "" : "REPS"} · {ex.note.toUpperCase()}
+                    🎯 PROTOCOLO: {ex.seriesTarget}S × {ex.repsTarget} · {ex.note.toUpperCase()}
                   </span>
                 </div>
               </div>
 
-              {/* Histórico linear anterior completo da sessão passada */}
               {prev && prev.series && (
                 <div style={s.prevRowDynamic}>
-                  <p style={{ color: "#555", fontWeight: 700, marginBottom: 2 }}>Sessão Anterior:</p>
+                  <p style={{ color: "#555", fontWeight: 700, marginBottom: 2 }}>Anterior:</p>
                   {prev.series.map((sData, sIdx) => (
-                    <span key={sIdx} style={{ color: "#999", marginRight: 12, display: "inline-block" }}>
-                      [Sé{sIdx + 1}: {sData.carga || "0"}kg × {sData.reps || "0"}{ex.isTimeBased ? "s" : ""}]
+                    <span key={sIdx} style={{ color: "#999", marginRight: 10, display: "inline-block", fontSize: 10 }}>
+                      [S${sIdx + 1} (${sData.type || 'WORK'}): ${sData.carga || "0"}kg × ${sData.reps || "0"}]
                     </span>
                   ))}
-                  {prev.obs && <p style={{ color: "#666", fontStyle: "italic", marginTop: 2 }}>Obs antiga: {prev.obs}</p>}
                 </div>
               )}
 
-              {/* Renderização das linhas individuais para cada série prevista */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
                 {currentEntry.series.map((serie, idx) => {
-                  const prevCarga = prev?.series?.[idx]?.carga || "0";
-                  const prevReps = prev?.series?.[idx]?.reps || ex.repsTarget.split("-")[0];
-
                   return (
-                    <div key={idx} style={s.serieInputRow}>
-                      <span style={s.serieLabelIndicator}>SÉRIE {idx + 1}</span>
-                      <div style={{ flex: 1, display: "flex", gap: 8 }}>
+                    <div key={idx} style={s.serieInputRowDynamic}>
+                      {/* Seletor Estratégico de Tipo de Série */}
+                      <select
+                        style={s.typeSelector}
+                        value={serie.type || "WORK"}
+                        onChange={(e) => handleSerieChange(ex.name, idx, "type", e.target.value)}
+                      >
+                        <option value="WORK">WORK</option>
+                        <option value="FEEDER">FEEDER</option>
+                        <option value="TOP">TOP</option>
+                      </select>
+
+                      <div style={{ flex: 1, display: "flex", gap: 6 }}>
                         <input
-                          style={s.input}
+                          style={s.inputCompact}
                           type="number"
                           inputMode="decimal"
-                          placeholder={`${prevCarga} kg`}
+                          placeholder="Carga (kg)"
                           value={serie.carga}
                           onChange={(e) => handleSerieChange(ex.name, idx, "carga", e.target.value)}
                           autoComplete="off"
                         />
                         <input
-                          style={s.input}
+                          style={s.inputCompact}
                           type="number"
                           inputMode="numeric"
-                          placeholder={`${prevReps} ${ex.isTimeBased ? "s" : ""}`}
+                          placeholder={ex.isTimeBased ? "Segundos" : "Reps"}
                           value={serie.reps}
                           onChange={(e) => handleSerieChange(ex.name, idx, "reps", e.target.value)}
                           autoComplete="off"
                         />
                       </div>
+
+                      {/* Botão para deletar séries extras que saírem fora do planejado */}
+                      {currentEntry.series.length > 1 && (
+                        <button style={s.removeSerieBtn} onClick={() => handleRemoveSerie(ex.name, idx)}>✕</button>
+                      )}
                     </div>
                   );
                 })}
+
+                <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                  <button type="button" style={s.addSerieInlineBtn} onClick={() => handleAddExtraSerie(ex.name)}>
+                    ＋ ADICIONAR SÉRIE EXTRA (FEEDER/TOP)
+                  </button>
+                </div>
 
                 <div style={s.inputGroup}>
                   <label style={s.inputLabel}>OBSERVAÇÃO DA SESSÃO</label>
@@ -482,13 +528,17 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSeri
 function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedLog, setExpandedLog, handleDeleteLog, handleExportPDF }: { logs: LogEntry[]; allLogs: LogEntry[]; filterTreino: string; setFilterTreino: (t: string) => void; expandedLog: number | null; setExpandedLog: (id: number | null) => void; handleDeleteLog: (id: number) => void; handleExportPDF: (log: LogEntry) => void }) {
   
   function renderMiniChart(exerciseName: string) {
-    // Pega a média de carga das séries executadas para montar a linha de evolução histórica
+    // Filtro cirúrgico: Gráficos ignoram os Feeder Sets para não derrubar a linha de força real
     const historicalData = [...allLogs]
       .reverse()
       .map((l) => {
         const series = l.exercises[exerciseName]?.series || [];
-        const cargasValidas = series.map(s => Number(s.carga) || 0).filter(v => v > 0);
-        const mediaCarga = cargasValidas.length > 0 ? Math.round(cargasValidas.reduce((a, b) => a + b, 0) / cargasValidas.length) : 0;
+        const seriesDeTrabalho = series.filter(s => s.type === "WORK" || s.type === "TOP");
+        const cargasValidas = seriesDeTrabalho.map(s => Number(s.carga) || 0).filter(v => v > 0);
+        
+        const mediaCarga = cargasValidas.length > 0 
+          ? Math.round(cargasValidas.reduce((a, b) => a + b, 0) / cargasValidas.length) 
+          : 0;
         return { date: formatDate(l.date).slice(0, 5), val: mediaCarga };
       })
       .filter((d) => d.val > 0)
@@ -499,7 +549,7 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
 
     return (
       <div style={s.chartContainer}>
-        <p style={s.chartTitle}>Evolução Média de Carga (Últimas Sessões)</p>
+        <p style={s.chartTitle}>Evolução de Carga Real (Ignorando Feeders)</p>
         <div style={s.chartTrack}>
           {historicalData.map((d, i) => {
             const pct = (d.val / maxCarga) * 100;
@@ -550,11 +600,11 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
                 {Object.entries(log.exercises).map(([ex, data]) => {
                   const isTime = PROTOCOLO_TREINOS[log.treino]?.find(p => p.name === ex)?.isTimeBased;
                   
-                  // Monta as linhas lineares por série conforme solicitado
                   const seriesLine = data.series.map((sData, sIdx) => {
+                    const typeTag = sData.type && sData.type !== "WORK" ? `(${sData.type}) ` : "";
                     const cg = sData.carga ? `${sData.carga}kg` : "0kg";
                     const rp = sData.reps ? `${sData.reps}${isTime ? "s" : " reps"}` : "0";
-                    return `S${sIdx + 1}: ${cg} × ${rp}`;
+                    return `S${sIdx + 1}: ${typeTag}${cg} × ${rp}`;
                   }).join(" · ");
 
                   const obsText = data.obs ? ` · (${data.obs})` : "";
@@ -562,9 +612,7 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
                   return (
                     <div key={ex} style={s.logExBlock}>
                       <p style={s.logExNameClean}>{ex.toUpperCase()}</p>
-                      <p style={s.logExDataLine}>
-                        {seriesLine}{obsText}
-                      </p>
+                      <p style={s.logExDataLine}>{seriesLine}{obsText}</p>
                       {renderMiniChart(ex)}
                     </div>
                   );
@@ -585,19 +633,13 @@ const fonts = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
   body { background: #0a0a0a; overflow-x: hidden; width: 100%; }
-  input { outline: none; border: 1px solid #1e1e1e; }
-  input:focus { border-color: #c0392b !important; }
+  input, select { outline: none; border: 1px solid #1e1e1e; }
+  input:focus, select:focus { border-color: #c0392b !important; }
   
   button, input, select, textarea {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
     box-shadow: none !important;
-  }
-  button:focus, button:active, .tabBtn:focus, .tabBtn:active {
-    outline: none !important;
-    box-shadow: none !important;
-    border-color: transparent !important;
-    background: none;
   }
 `;
 
@@ -616,9 +658,9 @@ const s: Record<string, React.CSSProperties> = {
   logoSub: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: TEXT, letterSpacing: 6 },
   headerCaption: { fontSize: 10, letterSpacing: 3, color: "#555", marginTop: 6, fontWeight: 700 },
   
-  nav: { display: "flex", background: "#0d0d0d", border: "none", outline: "none" },
-  navBtn: { flex: 1, background: "none", border: "none", outline: "none", color: "#555", padding: "14px 0", fontSize: 12, fontFamily: "'Bebas Neue', cursive", letterSpacing: 2, cursor: "pointer", borderBottom: "3px solid transparent", transition: "all 0.15s ease" },
-  navBtnActive: { color: TEXT, borderBottom: `3px solid ${RED}`, background: "none", outline: "none" },
+  nav: { display: "flex", background: "#0d0d0d" },
+  navBtn: { flex: 1, background: "none", border: "none", color: "#555", padding: "14px 0", fontSize: 12, fontFamily: "'Bebas Neue', cursive", letterSpacing: 2, cursor: "pointer", borderBottom: "3px solid transparent", transition: "all 0.15s ease" },
+  navBtnActive: { color: TEXT, borderBottom: `3px solid ${RED}` },
   
   contentScroll: { padding: "0 16px 40px 16px", flex: 1, display: "flex", flexDirection: "column" },
   section: { paddingTop: 20, flex: 1, display: "flex", flexDirection: "column" },
@@ -637,8 +679,8 @@ const s: Record<string, React.CSSProperties> = {
   motivText: { fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, color: RED },
   
   tabRow: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 },
-  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer", outline: "none", borderBottom: "none" },
-  tabBtnActive: { background: RED, borderColor: RED, color: "#fff", outline: "none" },
+  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer" },
+  tabBtnActive: { background: RED, borderColor: RED, color: "#fff" },
   
   dateLabel: { fontSize: 12, color: RED, marginBottom: 12, fontWeight: 800 },
   prevBanner: { background: "rgba(39, 174, 96, 0.05)", border: "1px solid #27ae60", borderRadius: 6, padding: "10px 14px", fontSize: 12, color: "#4fa34f", marginBottom: 16 },
@@ -647,11 +689,15 @@ const s: Record<string, React.CSSProperties> = {
   exHeader: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14 },
   exNum: { fontFamily: "'Bebas Neue', cursive", fontSize: 20, color: RED, minWidth: 28 },
   exName: { fontFamily: "'Bebas Neue', cursive", fontSize: 18, color: TEXT },
-  prevRowDynamic: { background: "#0d0d0d", borderRadius: 4, padding: "6px 10px", fontSize: 11, marginBottom: 12, border: "1px solid #141414" },
+  prevRowDynamic: { background: "#0d0d0d", borderRadius: 4, padding: "8px 10px", fontSize: 11, marginBottom: 12, border: "1px solid #141414" },
   
-  // Estilos da linha de entrada das séries individuais
-  serieInputRow: { display: "flex", alignItems: "center", gap: 12, background: "#0d0d0d", padding: "6px 10px", borderRadius: 5, border: "1px solid #141414" },
-  serieLabelIndicator: { fontSize: 10, fontFamily: "'Bebas Neue', cursive", color: RED, letterSpacing: 1, minWidth: 55 },
+  // Estilos da linha dinâmica com o seletor de esforço integrado
+  serieInputRowDynamic: { display: "flex", alignItems: "center", gap: 8, background: "#0d0d0d", padding: "6px 8px", borderRadius: 5, border: "1px solid #141414" },
+  typeSelector: { background: "#161616", border: `1px solid ${BORDER}`, color: RED, fontSize: 10, fontWeight: 800, padding: "8px 4px", borderRadius: 4, minWidth: 72, textAlign: "center" },
+  
+  inputCompact: { background: BG, border: `1px solid ${BORDER}`, borderRadius: 4, color: TEXT, padding: "8px", fontSize: 15, width: "100%", fontWeight: 600 },
+  removeSerieBtn: { background: "none", border: "none", color: "#666", fontSize: 14, padding: "0 4px", cursor: "pointer" },
+  addSerieInlineBtn: { background: "none", border: `1px dashed ${BORDER}`, borderRadius: 4, color: "#777", width: "100%", padding: "10px", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, cursor: "pointer", textAlign: "center" },
   
   inputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: 5, marginTop: 4 },
   inputLabel: { fontSize: 9, color: "#555", fontWeight: 800 },
