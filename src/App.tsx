@@ -372,7 +372,7 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
                 <div style={s.prevRow}>
                   <span style={s.prevLabel}>Anterior →</span>
                   <span style={s.prevValue}>
-                    {prev.carga ? `${prev.carga}kg` : "0kg"} × {prev.reps ? `${prev.reps} RM` : "0 RM"} {prev.series ? `[${prev.series}s]` : "[1s]"} {prev.obs ? `· ${prev.obs}` : ""}
+                    {prev.carga ? `${prev.carga}kg` : "0kg"} × {prev.reps ? `${prev.reps} reps` : "0 reps"} {prev.series ? `[${prev.series}s]` : "[1s]"}
                   </span>
                 </div>
               )}
@@ -380,20 +380,20 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
                 <div style={s.inputRowThreeCols}>
                   <div style={s.inputGroup}>
                     <label style={s.inputLabel}>CARGA (kg)</label>
-                    <input style={s.input} type="number" inputMode="decimal" placeholder={prev?.carga || "0"} value={entries[ex]?.carga || ""} onChange={(e) => handleEntry(ex, "carga", e.target.value)} autoComplete="off" />
+                    <input style={s.input} type="number" inputMode="decimal" placeholder={prev?.carga || "0"} value={entries[ex]?.carga || ""} onChange={(e) => handleEntry(ex, "carga", e.target.value)} />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.inputLabel}>REPETIÇÕES</label>
-                    <input style={s.input} type="number" inputMode="numeric" placeholder={prev?.reps || "0"} value={entries[ex]?.reps || ""} onChange={(e) => handleEntry(ex, "reps", e.target.value)} autoComplete="off" />
+                    <input style={s.input} type="number" inputMode="numeric" placeholder={prev?.reps || "0"} value={entries[ex]?.reps || ""} onChange={(e) => handleEntry(ex, "reps", e.target.value)} />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.inputLabel}>SÉRIES</label>
-                    <input style={s.input} type="number" inputMode="numeric" placeholder={prev?.series || "1"} value={entries[ex]?.series || ""} onChange={(e) => handleEntry(ex, "series", e.target.value)} autoComplete="off" />
+                    <input style={s.input} type="number" inputMode="numeric" placeholder={prev?.series || "0"} value={entries[ex]?.series || ""} onChange={(e) => handleEntry(ex, "series", e.target.value)} />
                   </div>
                 </div>
                 <div style={s.inputGroup}>
                   <label style={s.inputLabel}>OBSERVAÇÃO PERTINENTE</label>
-                  <input style={s.input} type="text" placeholder="ex: boa execução, drop set no final..." value={entries[ex]?.obs || ""} onChange={(e) => handleEntry(ex, "obs", e.target.value)} autoComplete="off" />
+                  <input style={s.input} type="text" placeholder="ex: boa execução, drop set no final..." value={entries[ex]?.obs || ""} onChange={(e) => handleEntry(ex, "obs", e.target.value)} />
                 </div>
               </div>
             </div>
@@ -507,16 +507,16 @@ const fonts = `
   input { outline: none; border: 1px solid #1e1e1e; }
   input:focus { border-color: #c0392b !important; }
   
+  /* Reset cirúrgico de foco para o Safari do iOS eliminar linhas e bordas fantasmas */
   button, input, select, textarea {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
     box-shadow: none !important;
   }
-  button:focus, button:active, .tabBtn:focus, .tabBtn:active {
+  button:focus, button:active {
     outline: none !important;
     box-shadow: none !important;
-    border-color: transparent !important;
-    background: none;
+    border-color: transparent;
   }
 `;
 
@@ -525,6 +525,7 @@ const BG = "#0a0a0a";
 const CARD = "#111";
 const BORDER = "#1e1e1e";
 const TEXT = "#e8e8e8";
+const MUTED = "#444";
 
 const s: Record<string, React.CSSProperties> = {
   root: { background: BG, minHeight: "100vh", width: "100%", maxWidth: "520px", margin: "0 auto", display: "flex", flexDirection: "column", color: TEXT, fontFamily: "'DM Sans', sans-serif" },
@@ -535,6 +536,7 @@ const s: Record<string, React.CSSProperties> = {
   logoSub: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: TEXT, letterSpacing: 6 },
   headerCaption: { fontSize: 10, letterSpacing: 3, color: "#555", marginTop: 6, fontWeight: 700 },
   
+  // Customização estrita das abas: remove qualquer borda nativa ou residual branca do navegador
   nav: { display: "flex", background: "#0d0d0d", border: "none", outline: "none" },
   navBtn: { flex: 1, background: "none", border: "none", outline: "none", color: "#555", padding: "14px 0", fontSize: 12, fontFamily: "'Bebas Neue', cursive", letterSpacing: 2, cursor: "pointer", borderBottom: "3px solid transparent", transition: "all 0.15s ease" },
   navBtnActive: { color: TEXT, borderBottom: `3px solid ${RED}`, background: "none", outline: "none" },
@@ -555,8 +557,9 @@ const s: Record<string, React.CSSProperties> = {
   motivBox: { border: `1px solid #1f0808`, borderRadius: 6, padding: "18px 16px", textAlign: "center", background: "#0d0505", marginBottom: 20 },
   motivText: { fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, color: RED },
   
+  // Customização estrita dos sub-botões de filtro no histórico
   tabRow: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 },
-  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer", outline: "none", borderBottom: "none" },
+  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer", outline: "none" },
   tabBtnActive: { background: RED, borderColor: RED, color: "#fff", outline: "none" },
   
   dateLabel: { fontSize: 12, color: RED, marginBottom: 12, fontWeight: 800 },
@@ -572,16 +575,14 @@ const s: Record<string, React.CSSProperties> = {
   inputRowThreeCols: { display: "flex", gap: 8 },
   inputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: 5 },
   inputLabel: { fontSize: 9, color: "#555", fontWeight: 800 },
-  
-  // Customização do placeholder cinza escuro para servir como guia visual nativo
   input: { background: BG, border: `1px solid ${BORDER}`, borderRadius: 5, color: TEXT, padding: "8px 10px", fontSize: 16, width: "100%", fontWeight: 600 },
-  
   saveBtn: { width: "100%", background: RED, border: "none", borderRadius: 6, color: "#fff", padding: "18px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, cursor: "pointer" },
   savedBanner: { background: "rgba(39, 174, 96, 0.1)", border: "1px solid #27ae60", borderRadius: 6, padding: "18px", textAlign: "center", color: "#4fa34f", fontFamily: "'Bebas Neue', cursive", fontSize: 18 },
   emptyState: { textAlign: "center", padding: "80px 0" },
   emptyText: { color: "#555", fontSize: 14 },
   emptyHype: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: RED },
   
+  // Estruturas de logs e distanciamento entre Tipo de Treino e Data
   logList: { display: "flex", flexDirection: "column", gap: 10 },
   logCard: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, overflow: "hidden" },
   logHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", cursor: "pointer" },
