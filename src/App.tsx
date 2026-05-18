@@ -14,53 +14,61 @@ interface LogEntry {
   exercises: Record<string, ExerciseData>;
 }
 
-const TREINOS: Record<string, string[]> = {
+// Estrutura técnica contendo as metas oficiais de séries, repetições e notas extraídas do PDF
+interface ProtocolExercise {
+  name: string;
+  seriesTarget: string;
+  repsTarget: string;
+  note: string;
+}
+
+const PROTOCOLO_TREINOS: Record<string, ProtocolExercise[]> = {
   "UPPER 1": [
-    "Puxada Pronada",
-    "Supino Inclinado c/ Halteres",
-    "Desenvolvimento c/ Halteres",
-    "Remada Barra T (pegada aberta)",
-    "Crucifixo Articulado",
-    "Elevação Lateral c/ Halteres",
-    "Rosca Alternada 45°",
-    "Tríceps Francês na Polia (corda)",
-    "Abdominal na Polia",
+    { name: "Puxada Pronada", seriesTarget: "2", repsTarget: "8", note: "CLUSTER SETS" },
+    { name: "Supino Inclinado c/ Halteres", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps" },
+    { name: "Desenvolvimento c/ Halteres", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps" },
+    { name: "Remada Barra T (pegada aberta)", seriesTarget: "2", repsTarget: "8", note: "CLUSTER SETS - Divida em 2 blocos" },
+    { name: "Crucifixo Articulado", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Elevação Lateral c/ Halteres", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Rosca Alternada 45°", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Tríceps Francês na Polia (corda)", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Abdominal na Polia", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" }
   ],
   "LOWER 1": [
-    "Cadeira Abdutora",
-    "Agachamento Búlgaro no Smith",
-    "Agachamento no Smith (Max Amplitude)",
-    "Extensão de Panturrilha no Smith",
-    "Mesa Flexora",
-    "Cadeira Flexora",
-    "Leg Press",
-    "Prancha Frontal",
+    { name: "Cadeira Abdutora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Agachamento Búlgaro no Smith", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps - Amplitude máxima" },
+    { name: "Agachamento no Smith (Max Amplitude)", seriesTarget: "2", repsTarget: "7", note: "Faça o mais profundo possível" },
+    { name: "Extensão de Panturrilha no Smith", seriesTarget: "2", repsTarget: "10", note: "Coloque uma anilha sob a ponta dos pés" },
+    { name: "Mesa Flexora", seriesTarget: "2", repsTarget: "7", note: "Movimento controlado e máxima amplitude" },
+    { name: "Cadeira Flexora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Leg Press", seriesTarget: "2", repsTarget: "7", note: "Movimento controlado, vai pra morte" },
+    { name: "Prancha Frontal", seriesTarget: "3", repsTarget: "60", note: "Executar por 1 minuto" }
   ],
   "UPPER 2": [
-    "Puxada Neutra (Triângulo)",
-    "Supino Reto na Barra",
-    "Remada Baixa",
-    "Cross Polia Alta",
-    "Barra Fixa",
-    "Desenvolvimento Articulado",
-    "Elevação Lateral na Polia",
-    "Rosca Direta na Barra",
-    "Tríceps Corda",
-    "Abdominal na Polia",
+    { name: "Puxada Neutra (Triângulo)", seriesTarget: "2", repsTarget: "8", note: "CLUSTER SETS" },
+    { name: "Supino Reto na Barra", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps" },
+    { name: "Remada Baixa", seriesTarget: "2", repsTarget: "7", note: "Pico de contração (Isometria de 1 a 2s)" },
+    { name: "Cross Polia Alta", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Barra Fixa", seriesTarget: "2", repsTarget: "10", note: "Realizar até o máximo de repetições" },
+    { name: "Desenvolvimento Articulado", seriesTarget: "2", repsTarget: "7", note: "DEAD STOP - Zere o movimento no apoio" },
+    { name: "Elevação Lateral na Polia", seriesTarget: "2", repsTarget: "10", note: "SEM ROUBAR" },
+    { name: "Rosca Direta na Barra", seriesTarget: "2", repsTarget: "7", note: "Movimento limpo, máxima extensão" },
+    { name: "Tríceps Corda", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Abdominal na Polia", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" }
   ],
   "LOWER 2": [
-    "Cadeira Abdutora",
-    "Elevação Pélvica",
-    "Agachamento Sumô",
-    "Stiff na Barra",
-    "Flexor de Pé",
-    "Panturrilha Sentado",
-    "Cadeira Extensora",
-    "Prancha Frontal",
-  ],
+    { name: "Cadeira Abdutora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Elevação Pélvica", seriesTarget: "2", repsTarget: "7", note: "BOTA CARGA NISSO SEM MEDO" },
+    { name: "Agachamento Sumô", seriesTarget: "2", repsTarget: "7", note: "Movimento o mais profundo possível" },
+    { name: "Stiff na Barra", seriesTarget: "2", repsTarget: "7", note: "Movimento controlado" },
+    { name: "Flexor de Pé", seriesTarget: "2", repsTarget: "10", note: "Pico de contração" },
+    { name: "Panturrilha Sentado", seriesTarget: "2", repsTarget: "10", note: "Máxima amplitude, não roube" },
+    { name: "Cadeira Extensora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
+    { name: "Prancha Frontal", seriesTarget: "3", repsTarget: "60", note: "Executar por 1 minuto" }
+  ]
 };
 
-const TREINO_KEYS = Object.keys(TREINOS);
+const TREINO_KEYS = Object.keys(PROTOCOLO_TREINOS);
 const STORAGE_KEY = "jmr_logs_v3";
 
 function formatDate(iso: string) {
@@ -108,8 +116,8 @@ export default function App() {
 
   useEffect(() => {
     const blank: Record<string, ExerciseData> = {};
-    TREINOS[selectedTreino].forEach((ex) => {
-      blank[ex] = { carga: "", reps: "", series: "", obs: "" };
+    PROTOCOLO_TREINOS[selectedTreino].forEach((ex) => {
+      blank[ex.name] = { carga: "", reps: "", series: "", obs: "" };
     });
     setEntries(blank);
     setSaved(false);
@@ -310,7 +318,7 @@ function HomeScreen({ logs, goToTreino, getLastLog }: { logs: LogEntry[]; goToTr
           return (
             <button key={t} style={s.treinoCard} onClick={() => goToTreino(t)}>
               <span style={s.treinoCardName}>{t}</span>
-              <span style={s.treinoCardSub}>{TREINOS[t].length} exercícios</span>
+              <span style={s.treinoCardSub}>{PROTOCOLO_TREINOS[t].length} exercícios</span>
               {last ? (
                 <span style={s.treinoCardLast}>Último: {formatDate(last.date)}</span>
               ) : (
@@ -360,19 +368,30 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
         </div>
       )}
       <div style={s.exerciseList}>
-        {TREINOS[selectedTreino].map((ex, i) => {
-          const prev = prevLog?.exercises?.[ex];
+        {PROTOCOLO_TREINOS[selectedTreino].map((ex, i) => {
+          const prev = prevLog?.exercises?.[ex.name];
+          
+          // Lógica inteligente de placeholders: busca dados reais anteriores; se não existirem, injeta a meta prevista do PDF
+          const placeholderCarga = prev?.carga || "0";
+          const placeholderReps = prev?.reps || ex.repsTarget;
+          const placeholderSeries = prev?.series || ex.seriesTarget;
+
           return (
-            <div key={ex} style={s.exerciseCard}>
+            <div key={ex.name} style={s.exerciseCard}>
               <div style={s.exHeader}>
                 <span style={s.exNum}>{String(i + 1).padStart(2, "0")}</span>
-                <span style={s.exName}>{ex.toUpperCase()}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={s.exName}>{ex.name.toUpperCase()}</span>
+                  <span style={{ fontSize: 10, color: RED, fontWeight: 700, letterSpacing: 0.5 }}>
+                    🎯 PROTOCOLO: {ex.note.toUpperCase()}
+                  </span>
+                </div>
               </div>
               {prev && (
                 <div style={s.prevRow}>
                   <span style={s.prevLabel}>Anterior →</span>
                   <span style={s.prevValue}>
-                    {prev.carga ? `${prev.carga}kg` : "0kg"} × {prev.reps ? `${prev.reps} reps` : "0 reps"} {prev.series ? `[${prev.series}s]` : "[1s]"}
+                    {prev.carga ? `${prev.carga}kg` : "0kg"} × {prev.reps ? `${prev.reps} reps` : "0 reps"} {prev.series ? `[${prev.series}s]` : "[1s]"} {prev.obs ? `· ${prev.obs}` : ""}
                   </span>
                 </div>
               )}
@@ -380,20 +399,20 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
                 <div style={s.inputRowThreeCols}>
                   <div style={s.inputGroup}>
                     <label style={s.inputLabel}>CARGA (kg)</label>
-                    <input style={s.input} type="number" inputMode="decimal" placeholder={prev?.carga || "0"} value={entries[ex]?.carga || ""} onChange={(e) => handleEntry(ex, "carga", e.target.value)} />
+                    <input style={s.input} type="number" inputMode="decimal" placeholder={placeholderCarga} value={entries[ex.name]?.carga || ""} onChange={(e) => handleEntry(ex.name, "carga", e.target.value)} autoComplete="off" />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.inputLabel}>REPETIÇÕES</label>
-                    <input style={s.input} type="number" inputMode="numeric" placeholder={prev?.reps || "0"} value={entries[ex]?.reps || ""} onChange={(e) => handleEntry(ex, "reps", e.target.value)} />
+                    <input style={s.input} type="number" inputMode="numeric" placeholder={placeholderReps} value={entries[ex.name]?.reps || ""} onChange={(e) => handleEntry(ex.name, "reps", e.target.value)} autoComplete="off" />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.inputLabel}>SÉRIES</label>
-                    <input style={s.input} type="number" inputMode="numeric" placeholder={prev?.series || "0"} value={entries[ex]?.series || ""} onChange={(e) => handleEntry(ex, "series", e.target.value)} />
+                    <input style={s.input} type="number" inputMode="numeric" placeholder={placeholderSeries} value={entries[ex.name]?.series || ""} onChange={(e) => handleEntry(ex.name, "series", e.target.value)} autoComplete="off" />
                   </div>
                 </div>
                 <div style={s.inputGroup}>
                   <label style={s.inputLabel}>OBSERVAÇÃO PERTINENTE</label>
-                  <input style={s.input} type="text" placeholder="ex: boa execução, drop set no final..." value={entries[ex]?.obs || ""} onChange={(e) => handleEntry(ex, "obs", e.target.value)} />
+                  <input style={s.input} type="text" placeholder="ex: boa execução, drop set no final..." value={entries[ex.name]?.obs || ""} onChange={(e) => handleEntry(ex.name, "obs", e.target.value)} autoComplete="off" />
                 </div>
               </div>
             </div>
@@ -507,16 +526,16 @@ const fonts = `
   input { outline: none; border: 1px solid #1e1e1e; }
   input:focus { border-color: #c0392b !important; }
   
-  /* Reset cirúrgico de foco para o Safari do iOS eliminar linhas e bordas fantasmas */
   button, input, select, textarea {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
     box-shadow: none !important;
   }
-  button:focus, button:active {
+  button:focus, button:active, .tabBtn:focus, .tabBtn:active {
     outline: none !important;
     box-shadow: none !important;
-    border-color: transparent;
+    border-color: transparent !important;
+    background: none;
   }
 `;
 
@@ -525,7 +544,6 @@ const BG = "#0a0a0a";
 const CARD = "#111";
 const BORDER = "#1e1e1e";
 const TEXT = "#e8e8e8";
-const MUTED = "#444";
 
 const s: Record<string, React.CSSProperties> = {
   root: { background: BG, minHeight: "100vh", width: "100%", maxWidth: "520px", margin: "0 auto", display: "flex", flexDirection: "column", color: TEXT, fontFamily: "'DM Sans', sans-serif" },
@@ -536,7 +554,6 @@ const s: Record<string, React.CSSProperties> = {
   logoSub: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: TEXT, letterSpacing: 6 },
   headerCaption: { fontSize: 10, letterSpacing: 3, color: "#555", marginTop: 6, fontWeight: 700 },
   
-  // Customização estrita das abas: remove qualquer borda nativa ou residual branca do navegador
   nav: { display: "flex", background: "#0d0d0d", border: "none", outline: "none" },
   navBtn: { flex: 1, background: "none", border: "none", outline: "none", color: "#555", padding: "14px 0", fontSize: 12, fontFamily: "'Bebas Neue', cursive", letterSpacing: 2, cursor: "pointer", borderBottom: "3px solid transparent", transition: "all 0.15s ease" },
   navBtnActive: { color: TEXT, borderBottom: `3px solid ${RED}`, background: "none", outline: "none" },
@@ -557,9 +574,8 @@ const s: Record<string, React.CSSProperties> = {
   motivBox: { border: `1px solid #1f0808`, borderRadius: 6, padding: "18px 16px", textAlign: "center", background: "#0d0505", marginBottom: 20 },
   motivText: { fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, color: RED },
   
-  // Customização estrita dos sub-botões de filtro no histórico
   tabRow: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 },
-  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer", outline: "none" },
+  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer", outline: "none", borderBottom: "none" },
   tabBtnActive: { background: RED, borderColor: RED, color: "#fff", outline: "none" },
   
   dateLabel: { fontSize: 12, color: RED, marginBottom: 12, fontWeight: 800 },
@@ -582,7 +598,6 @@ const s: Record<string, React.CSSProperties> = {
   emptyText: { color: "#555", fontSize: 14 },
   emptyHype: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: RED },
   
-  // Estruturas de logs e distanciamento entre Tipo de Treino e Data
   logList: { display: "flex", flexDirection: "column", gap: 10 },
   logCard: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, overflow: "hidden" },
   logHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", cursor: "pointer" },
