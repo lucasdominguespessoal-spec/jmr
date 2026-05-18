@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-// Estrutura de dados avançada com tipagem de série técnica
+// Estrutura de dados avançada com suporte a séries técnicas e estratégicas
 interface SerieData {
   carga: string;
   reps: string;
-  type: "WORK" | "FEEDER" | "TOP"; // Controle de zona de esforço
+  type: "WORK" | "FEEDER" | "TOP" | "CLUSTER"; // Adicionado CLUSTER ao núcleo de controle
 }
 
 interface ExerciseData {
@@ -74,7 +74,7 @@ const PROTOCOLO_TREINOS: Record<string, ProtocolExercise[]> = {
 };
 
 const TREINO_KEYS = Object.keys(PROTOCOLO_TREINOS);
-const STORAGE_KEY = "jmr_logs_v5"; // Incrementado para evitar incompatibilidade com matrizes antigas
+const STORAGE_KEY = "jmr_logs_v5"; // Mantida para estabilidade estrutural
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -123,8 +123,12 @@ export default function App() {
     const blank: Record<string, ExerciseData> = {};
     PROTOCOLO_TREINOS[selectedTreino].forEach((ex) => {
       const seriesArray: SerieData[] = [];
+      
+      // Ajuste tático: Puxada Pronada e Remada T já nascem marcadas como CLUSTER por padrão do protocolo
+      const defaultType = (ex.note === "CLUSTER SETS" || ex.name === "Remada Barra T (pegada aberta)") ? "CLUSTER" : "WORK";
+
       for (let s = 0; s < ex.seriesTarget; s++) {
-        seriesArray.push({ carga: "", reps: "", type: "WORK" });
+        seriesArray.push({ carga: "", reps: "", type: defaultType });
       }
       blank[ex.name] = { series: seriesArray, obs: "" };
     });
@@ -142,7 +146,7 @@ export default function App() {
     });
   }
 
-  function handleAddExtraSerie(exercise: string) {
+  function handleAddExtraSerie(exercise: string, forcedType?: "CLUSTER" | "FEEDER" | "TOP") {
     setEntries((prev) => {
       const currentEx = prev[exercise];
       if (!currentEx) return prev;
@@ -150,7 +154,7 @@ export default function App() {
         ...prev,
         [exercise]: {
           ...currentEx,
-          series: [...currentEx.series, { carga: "", reps: "", type: "FEEDER" }]
+          series: [...currentEx.series, { carga: "", reps: "", type: forcedType || "FEEDER" }]
         }
       };
     });
@@ -392,7 +396,7 @@ interface RegisterProps {
   setSelectedTreino: (t: string) => void;
   entries: Record<string, ExerciseData>;
   handleSerieChange: (ex: string, idx: number, f: keyof SerieData, v: any) => void;
-  handleAddExtraSerie: (ex: string) => void;
+  handleAddExtraSerie: (ex: string, forcedType?: "CLUSTER" | "FEEDER" | "TOP") => void;
   handleRemoveSerie: (ex: string, index: number) => void;
   handleObsChange: (ex: string, v: string) => void;
   handleSave: () => void;
@@ -452,13 +456,14 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSeri
                 {currentEntry.series.map((serie, idx) => {
                   return (
                     <div key={idx} style={s.serieInputRowDynamic}>
-                      {/* Seletor Estratégico de Tipo de Série */}
+                      {/* Seletor Estratégico com CLUSTER Integrado */}
                       <select
                         style={s.typeSelector}
                         value={serie.type || "WORK"}
                         onChange={(e) => handleSerieChange(ex.name, idx, "type", e.target.value)}
                       >
                         <option value="WORK">WORK</option>
+                        <option value="CLUSTER">CLUSTER</option>
                         <option value="FEEDER">FEEDER</option>
                         <option value="TOP">TOP</option>
                       </select>
@@ -484,7 +489,6 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSeri
                         />
                       </div>
 
-                      {/* Botão para deletar séries extras que saírem fora do planejado */}
                       {currentEntry.series.length > 1 && (
                         <button style={s.removeSerieBtn} onClick={() => handleRemoveSerie(ex.name, idx)}>✕</button>
                       )}
@@ -492,9 +496,15 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSeri
                   );
                 })}
 
-                <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                  <button type="button" style={s.addSerieInlineBtn} onClick={() => handleAddExtraSerie(ex.name)}>
-                    ＋ ADICIONAR SÉRIE EXTRA (FEEDER/TOP)
+                <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                  <button type="button" style={s.addSerieInlineBtn} onClick={() => handleAddExtraSerie(ex.name, "FEEDER")}>
+                    ＋ FEEDER
+                  </button>
+                  <button type="button" style={s.addSerieInlineBtn} onClick={() => handleAddExtraSerie(ex.name, "CLUSTER")}>
+                    ＋ CLUSTER
+                  </button>
+                  <button type="button" style={s.addSerieInlineBtn} onClick={() => handleAddExtraSerie(ex.name, "TOP")}>
+                    ＋ TOP
                   </button>
                 </div>
 
@@ -528,13 +538,13 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSeri
 function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedLog, setExpandedLog, handleDeleteLog, handleExportPDF }: { logs: LogEntry[]; allLogs: LogEntry[]; filterTreino: string; setFilterTreino: (t: string) => void; expandedLog: number | null; setExpandedLog: (id: number | null) => void; handleDeleteLog: (id: number) => void; handleExportPDF: (log: LogEntry) => void }) {
   
   function renderMiniChart(exerciseName: string) {
-    // Filtro cirúrgico: Gráficos ignoram os Feeder Sets para não derrubar a linha de força real
+    // Computa WORK, TOP e CLUSTER. Exclui apenas FEEDER para manter a pureza das métricas de intensidade real
     const historicalData = [...allLogs]
       .reverse()
       .map((l) => {
         const series = l.exercises[exerciseName]?.series || [];
-        const seriesDeTrabalho = series.filter(s => s.type === "WORK" || s.type === "TOP");
-        const cargasValidas = seriesDeTrabalho.map(s => Number(s.carga) || 0).filter(v => v > 0);
+        const seriesDeIntensidade = series.filter(s => s.type === "WORK" || s.type === "TOP" || s.type === "CLUSTER");
+        const cargasValidas = seriesDeIntensidade.map(s => Number(s.carga) || 0).filter(v => v > 0);
         
         const mediaCarga = cargasValidas.length > 0 
           ? Math.round(cargasValidas.reduce((a, b) => a + b, 0) / cargasValidas.length) 
@@ -549,7 +559,7 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
 
     return (
       <div style={s.chartContainer}>
-        <p style={s.chartTitle}>Evolução de Carga Real (Ignorando Feeders)</p>
+        <p style={s.chartTitle}>Evolução de Carga (Trabalho / Cluster / Top)</p>
         <div style={s.chartTrack}>
           {historicalData.map((d, i) => {
             const pct = (d.val / maxCarga) * 100;
@@ -634,7 +644,7 @@ const fonts = `
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
   body { background: #0a0a0a; overflow-x: hidden; width: 100%; }
   input, select { outline: none; border: 1px solid #1e1e1e; }
-  input:focus, select:focus { border-color: #c0392b !important; }
+  input:focus { border-color: #c0392b !important; }
   
   button, input, select, textarea {
     -webkit-tap-highlight-color: transparent !important;
@@ -691,13 +701,12 @@ const s: Record<string, React.CSSProperties> = {
   exName: { fontFamily: "'Bebas Neue', cursive", fontSize: 18, color: TEXT },
   prevRowDynamic: { background: "#0d0d0d", borderRadius: 4, padding: "8px 10px", fontSize: 11, marginBottom: 12, border: "1px solid #141414" },
   
-  // Estilos da linha dinâmica com o seletor de esforço integrado
-  serieInputRowDynamic: { display: "flex", alignItems: "center", gap: 8, background: "#0d0d0d", padding: "6px 8px", borderRadius: 5, border: "1px solid #141414" },
-  typeSelector: { background: "#161616", border: `1px solid ${BORDER}`, color: RED, fontSize: 10, fontWeight: 800, padding: "8px 4px", borderRadius: 4, minWidth: 72, textAlign: "center" },
+  serieInputRowDynamic: { display: "flex", alignItems: "center", gap: 6, background: "#0d0d0d", padding: "6px 8px", borderRadius: 5, border: "1px solid #141414" },
+  typeSelector: { background: "#161616", border: `1px solid ${BORDER}`, color: RED, fontSize: 10, fontWeight: 800, padding: "8px 2px", borderRadius: 4, minWidth: 76, textAlign: "center" },
   
   inputCompact: { background: BG, border: `1px solid ${BORDER}`, borderRadius: 4, color: TEXT, padding: "8px", fontSize: 15, width: "100%", fontWeight: 600 },
   removeSerieBtn: { background: "none", border: "none", color: "#666", fontSize: 14, padding: "0 4px", cursor: "pointer" },
-  addSerieInlineBtn: { background: "none", border: `1px dashed ${BORDER}`, borderRadius: 4, color: "#777", width: "100%", padding: "10px", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, cursor: "pointer", textAlign: "center" },
+  addSerieInlineBtn: { background: "none", border: `1px dashed ${BORDER}`, borderRadius: 4, color: "#888", padding: "6px 12px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, cursor: "pointer", textAlign: "center" },
   
   inputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: 5, marginTop: 4 },
   inputLabel: { fontSize: 9, color: "#555", fontWeight: 800 },
