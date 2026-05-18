@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 
-interface ExerciseData {
+// Estrutura de dados avançada para múltiplas séries por exercício
+interface SerieData {
   carga: string;
   reps: string;
-  series: string;
+}
+
+interface ExerciseData {
+  series: SerieData[];
   obs: string;
 }
 
@@ -14,62 +18,62 @@ interface LogEntry {
   exercises: Record<string, ExerciseData>;
 }
 
-// Estrutura técnica contendo as metas oficiais de séries, repetições e notas extraídas do PDF
 interface ProtocolExercise {
   name: string;
-  seriesTarget: string;
+  seriesTarget: number; // Número exato de linhas de séries que serão geradas
   repsTarget: string;
   note: string;
+  isTimeBased?: boolean; // Define se o rótulo muda para segundos
 }
 
 const PROTOCOLO_TREINOS: Record<string, ProtocolExercise[]> = {
   "UPPER 1": [
-    { name: "Puxada Pronada", seriesTarget: "2", repsTarget: "8", note: "CLUSTER SETS" },
-    { name: "Supino Inclinado c/ Halteres", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps" },
-    { name: "Desenvolvimento c/ Halteres", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps" },
-    { name: "Remada Barra T (pegada aberta)", seriesTarget: "2", repsTarget: "8", note: "CLUSTER SETS - Divida em 2 blocos" },
-    { name: "Crucifixo Articulado", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Elevação Lateral c/ Halteres", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Rosca Alternada 45°", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Tríceps Francês na Polia (corda)", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Abdominal na Polia", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" }
+    { name: "Puxada Pronada", seriesTarget: 2, repsTarget: "8", note: "CLUSTER SETS" },
+    { name: "Supino Inclinado c/ Halteres", seriesTarget: 2, repsTarget: "5-9", note: "Meta: 5 a 9 reps" },
+    { name: "Desenvolvimento c/ Halteres", seriesTarget: 2, repsTarget: "5-9", note: "Meta: 5 a 9 reps" },
+    { name: "Remada Barra T (pegada aberta)", seriesTarget: 2, repsTarget: "8", note: "CLUSTER SETS - Divida em 2 blocos" },
+    { name: "Crucifixo Articulado", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Elevação Lateral c/ Halteres", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Rosca Alternada 45°", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Tríceps Francês na Polia (corda)", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Abdominal na Polia", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" }
   ],
   "LOWER 1": [
-    { name: "Cadeira Abdutora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Agachamento Búlgaro no Smith", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps - Amplitude máxima" },
-    { name: "Agachamento no Smith (Max Amplitude)", seriesTarget: "2", repsTarget: "7", note: "Faça o mais profundo possível" },
-    { name: "Extensão de Panturrilha no Smith", seriesTarget: "2", repsTarget: "10", note: "Coloque uma anilha sob a ponta dos pés" },
-    { name: "Mesa Flexora", seriesTarget: "2", repsTarget: "7", note: "Movimento controlado e máxima amplitude" },
-    { name: "Cadeira Flexora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Leg Press", seriesTarget: "2", repsTarget: "7", note: "Movimento controlado, vai pra morte" },
-    { name: "Prancha Frontal", seriesTarget: "3", repsTarget: "60", note: "Executar por 1 minuto" }
+    { name: "Cadeira Abdutora", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Agachamento Búlgaro no Smith", seriesTarget: 2, repsTarget: "5-9", note: "Meta: 5 a 9 reps - Amplitude máxima" },
+    { name: "Agachamento no Smith (Max Amplitude)", seriesTarget: 2, repsTarget: "5-9", note: "Faça o mais profundo possível" },
+    { name: "Extensão de Panturrilha no Smith", seriesTarget: 2, repsTarget: "8-12", note: "Coloque uma anilha sob a ponta dos pés" },
+    { name: "Mesa Flexora", seriesTarget: 2, repsTarget: "5-9", note: "Movimento controlado e máxima amplitude" },
+    { name: "Cadeira Flexora", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Leg Press", seriesTarget: 2, repsTarget: "5-9", note: "Movimento controlado, vai pra morte" },
+    { name: "Prancha Frontal", seriesTarget: 3, repsTarget: "60s", note: "Executar por 1 minuto", isTimeBased: true }
   ],
   "UPPER 2": [
-    { name: "Puxada Neutra (Triângulo)", seriesTarget: "2", repsTarget: "8", note: "CLUSTER SETS" },
-    { name: "Supino Reto na Barra", seriesTarget: "2", repsTarget: "7", note: "Meta: 5 a 9 reps" },
-    { name: "Remada Baixa", seriesTarget: "2", repsTarget: "7", note: "Pico de contração (Isometria de 1 a 2s)" },
-    { name: "Cross Polia Alta", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Barra Fixa", seriesTarget: "2", repsTarget: "10", note: "Realizar até o máximo de repetições" },
-    { name: "Desenvolvimento Articulado", seriesTarget: "2", repsTarget: "7", note: "DEAD STOP - Zere o movimento no apoio" },
-    { name: "Elevação Lateral na Polia", seriesTarget: "2", repsTarget: "10", note: "SEM ROUBAR" },
-    { name: "Rosca Direta na Barra", seriesTarget: "2", repsTarget: "7", note: "Movimento limpo, máxima extensão" },
-    { name: "Tríceps Corda", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Abdominal na Polia", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" }
+    { name: "Puxada Neutra (Triângulo)", seriesTarget: 2, repsTarget: "8", note: "CLUSTER SETS" },
+    { name: "Supino Reto na Barra", seriesTarget: 2, repsTarget: "5-9", note: "Meta: 5 a 9 reps" },
+    { name: "Remada Baixa", seriesTarget: 2, repsTarget: "5-9", note: "Pico de contração (Isometria de 1 a 2s)" },
+    { name: "Cross Polia Alta", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Barra Fixa", seriesTarget: 2, repsTarget: "FALHA", note: "Realizar até o máximo de repetições" },
+    { name: "Desenvolvimento Articulado", seriesTarget: 2, repsTarget: "5-9", note: "DEAD STOP - Zere o movimento no apoio" },
+    { name: "Elevação Lateral na Polia", seriesTarget: 2, repsTarget: "8-12", note: "SEM ROUBAR" },
+    { name: "Rosca Direta na Barra", seriesTarget: 2, repsTarget: "5-9", note: "Movimento limpo, máxima extensão" },
+    { name: "Tríceps Corda", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Abdominal na Polia", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" }
   ],
   "LOWER 2": [
-    { name: "Cadeira Abdutora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Elevação Pélvica", seriesTarget: "2", repsTarget: "7", note: "BOTA CARGA NISSO SEM MEDO" },
-    { name: "Agachamento Sumô", seriesTarget: "2", repsTarget: "7", note: "Movimento o mais profundo possível" },
-    { name: "Stiff na Barra", seriesTarget: "2", repsTarget: "7", note: "Movimento controlado" },
-    { name: "Flexor de Pé", seriesTarget: "2", repsTarget: "10", note: "Pico de contração" },
-    { name: "Panturrilha Sentado", seriesTarget: "2", repsTarget: "10", note: "Máxima amplitude, não roube" },
-    { name: "Cadeira Extensora", seriesTarget: "2", repsTarget: "10", note: "Meta: 8 a 12 reps" },
-    { name: "Prancha Frontal", seriesTarget: "3", repsTarget: "60", note: "Executar por 1 minuto" }
+    { name: "Cadeira Abdutora", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Elevação Pélvica", seriesTarget: 2, repsTarget: "5-9", note: "BOTA CARGA NISSO SEM MEDO" },
+    { name: "Agachamento Sumô", seriesTarget: 2, repsTarget: "5-9", note: "Movimento o mais profundo possível" },
+    { name: "Stiff na Barra", seriesTarget: 2, repsTarget: "5-9", note: "Movimento controlado" },
+    { name: "Flexor de Pé", seriesTarget: 2, repsTarget: "8-12", note: "Pico de contração" },
+    { name: "Panturrilha Sentado", seriesTarget: 2, repsTarget: "8-12", note: "Máxima amplitude, não roube" },
+    { name: "Cadeira Extensora", seriesTarget: 2, repsTarget: "8-12", note: "Meta: 8 a 12 reps" },
+    { name: "Prancha Frontal", seriesTarget: 3, repsTarget: "60s", note: "Executar por 1 minuto", isTimeBased: true }
   ]
 };
 
 const TREINO_KEYS = Object.keys(PROTOCOLO_TREINOS);
-const STORAGE_KEY = "jmr_logs_v3";
+const STORAGE_KEY = "jmr_logs_v4"; // Incrementado para isolar a nova matriz de séries
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -117,16 +121,32 @@ export default function App() {
   useEffect(() => {
     const blank: Record<string, ExerciseData> = {};
     PROTOCOLO_TREINOS[selectedTreino].forEach((ex) => {
-      blank[ex.name] = { carga: "", reps: "", series: "", obs: "" };
+      const seriesArray: SerieData[] = [];
+      for (let s = 0; s < ex.seriesTarget; s++) {
+        seriesArray.push({ carga: "", reps: "" });
+      }
+      blank[ex.name] = { series: seriesArray, obs: "" };
     });
     setEntries(blank);
     setSaved(false);
   }, [selectedTreino]);
 
-  function handleEntry(exercise: string, field: keyof ExerciseData, value: string) {
+  function handleSerieChange(exercise: string, index: number, field: keyof SerieData, value: string) {
+    setEntries((prev) => {
+      const currentEx = prev[exercise];
+      const updatedSeries = [...currentEx.series];
+      updatedSeries[index] = { ...updatedSeries[index], [field]: value };
+      return {
+        ...prev,
+        [exercise]: { ...currentEx, series: updatedSeries },
+      };
+    });
+  }
+
+  function handleObsChange(exercise: string, value: string) {
     setEntries((prev) => ({
       ...prev,
-      [exercise]: { ...prev[exercise], [field]: value },
+      [exercise]: { ...prev[exercise], obs: value },
     }));
   }
 
@@ -160,26 +180,24 @@ export default function App() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
-    const exercisesHTML = Object.entries(log.exercises)
-      .map(([ex, data], i) => {
-        const carga = Number(data.carga) || 0;
-        const reps = Number(data.reps) || 0;
-        const series = Number(data.series) || 1;
-        const totalVol = carga * reps * series;
-
-        return `
+    let rowsHTML = "";
+    Object.entries(log.exercises).forEach(([exName, data], i) => {
+      const isTime = PROTOCOLO_TREINOS[log.treino]?.find(p => p.name === exName)?.isTimeBased;
+      data.series.forEach((s, idx) => {
+        const cg = s.carga ? `${s.carga} kg` : "—";
+        const rp = s.reps ? `${s.reps}${isTime ? 's' : ' reps'}` : "—";
+        rowsHTML += `
           <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 10px; font-weight: bold; color: #222;">${String(i + 1).padStart(2, '0')}</td>
-            <td style="padding: 10px; font-weight: bold; color: #111;">${ex.toUpperCase()}</td>
-            <td style="padding: 10px; text-align: center;">${carga ? `${carga} kg` : '—'}</td>
-            <td style="padding: 10px; text-align: center;">${reps || '—'}</td>
-            <td style="padding: 10px; text-align: center;">${data.series || '—'}</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold; color: #c0392b;">${totalVol ? `${totalVol} kg` : '—'}</td>
-            <td style="padding: 10px; font-style: italic; color: #555; font-size: 11px;">${data.obs || '—'}</td>
+            <td style="padding: 10px; font-weight: bold; color: #555; text-align: center;">${idx === 0 ? String(i + 1).padStart(2, '0') : ''}</td>
+            <td style="padding: 10px; font-weight: bold; color: #111;">${idx === 0 ? exName.toUpperCase() : ''}</td>
+            <td style="padding: 10px; text-align: center; font-weight: bold; color: #c0392b;">SÉRIE ${idx + 1}</td>
+            <td style="padding: 10px; text-align: center;">${cg}</td>
+            <td style="padding: 10px; text-align: center;">${rp}</td>
+            <td style="padding: 10px; font-style: italic; color: #555; font-size: 11px;">${idx === 0 ? (data.obs || '—') : ''}</td>
           </tr>
         `;
-      })
-      .join("");
+      });
+    });
 
     printWindow.document.write(`
       <html>
@@ -202,11 +220,9 @@ export default function App() {
           <div class="header">
             <div>
               <span class="logo">JMR <span style="color:#111">TEAM</span></span>
-              <p class="title" style="margin-top: 5px;">PROTOCOLO LD · RELATÓRIO TÉCNICO</p>
+              <p class="title" style="margin-top: 5px;">PROTOCOLO LD · RELATÓRIO DETALHADO POR SÉRIE</p>
             </div>
-            <div style="text-align: right; font-size: 12px; color: #555; font-weight: bold;">
-              GERADO EM: ${new Date(log.date).toLocaleDateString('pt-BR')}
-            </div>
+            <div style="text-align: right; font-size: 12px; color: #555; font-weight: bold;">GERADO EM: ${new Date(log.date).toLocaleDateString('pt-BR')}</div>
           </div>
           <div class="meta-box">
             <div class="meta-item">ROTINA ESPECÍFICA: <strong>${log.treino}</strong></div>
@@ -216,27 +232,19 @@ export default function App() {
           <table>
             <thead>
               <tr>
-                <th style="width: 5%;">SEQ</th>
-                <th style="width: 35%;">EXERCÍCIO ESCALADO</th>
-                <th style="width: 12%; text-align: center;">CARGA</th>
-                <th style="width: 10%; text-align: center;">REPS</th>
-                <th style="width: 10%; text-align: center;">SÉRIES</th>
-                <th style="width: 13%; text-align: right;">VOL. TOTAL</th>
+                <th style="width: 6%; text-align: center;">SEQ</th>
+                <th style="width: 34%;">EXERCÍCIO ESCALADO</th>
+                <th style="width: 15%; text-align: center;">PARCIAL</th>
+                <th style="width: 15%; text-align: center;">CARGA</th>
+                <th style="width: 15%; text-align: center;">VOLUME / TEMPO</th>
                 <th style="width: 15%;">OBSERVAÇÕES</th>
               </tr>
             </thead>
-            <tbody>
-              ${exercisesHTML}
-            </tbody>
+            <tbody>${rowsHTML}</tbody>
           </table>
-          <div class="footer">
-            SISTEMA DE PROGRESSÃO TÉCNICA AVANÇADA DE CARGAS · JMR TEAM BRASIL
-          </div>
+          <div class="footer">SISTEMA DE PROGRESSÃO TÉCNICA AVANÇADA DE CARGAS · JMR TEAM BRASIL</div>
           <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
+            window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };
           </script>
         </body>
       </html>
@@ -284,7 +292,8 @@ export default function App() {
             selectedTreino={selectedTreino}
             setSelectedTreino={setSelectedTreino}
             entries={entries}
-            handleEntry={handleEntry}
+            handleSerieChange={handleSerieChange}
+            handleObsChange={handleObsChange}
             handleSave={handleSave}
             saved={saved}
             saving={saving}
@@ -349,8 +358,21 @@ function HomeScreen({ logs, goToTreino, getLastLog }: { logs: LogEntry[]; goToTr
   );
 }
 
-function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntry, handleSave, saved, saving, logs }: { selectedTreino: string; setSelectedTreino: (t: string) => void; entries: Record<string, ExerciseData>; handleEntry: (ex: string, f: keyof ExerciseData, v: string) => void; handleSave: () => void; saved: boolean; saving: boolean; logs: LogEntry[] }) {
+interface RegisterProps {
+  selectedTreino: string;
+  setSelectedTreino: (t: string) => void;
+  entries: Record<string, ExerciseData>;
+  handleSerieChange: (ex: string, idx: number, f: keyof SerieData, v: string) => void;
+  handleObsChange: (ex: string, v: string) => void;
+  handleSave: () => void;
+  saved: boolean;
+  saving: boolean;
+  logs: LogEntry[];
+}
+
+function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleSerieChange, handleObsChange, handleSave, saved, saving, logs }: RegisterProps) {
   const prevLog = logs.find((l) => l.treino === selectedTreino);
+
   return (
     <div style={s.section}>
       <p style={s.sectionTitle}>REGISTRAR TREINO</p>
@@ -370,11 +392,7 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
       <div style={s.exerciseList}>
         {PROTOCOLO_TREINOS[selectedTreino].map((ex, i) => {
           const prev = prevLog?.exercises?.[ex.name];
-          
-          // Lógica inteligente de placeholders: busca dados reais anteriores; se não existirem, injeta a meta prevista do PDF
-          const placeholderCarga = prev?.carga || "0";
-          const placeholderReps = prev?.reps || ex.repsTarget;
-          const placeholderSeries = prev?.series || ex.seriesTarget;
+          const currentEntry = entries[ex.name] || { series: [], obs: "" };
 
           return (
             <div key={ex.name} style={s.exerciseCard}>
@@ -383,36 +401,67 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={s.exName}>{ex.name.toUpperCase()}</span>
                   <span style={{ fontSize: 10, color: RED, fontWeight: 700, letterSpacing: 0.5 }}>
-                    🎯 PROTOCOLO: {ex.note.toUpperCase()}
+                    🎯 TARGET: {ex.seriesTarget} SÉRIES × {ex.repsTarget} {ex.isTimeBased ? "" : "REPS"} · {ex.note.toUpperCase()}
                   </span>
                 </div>
               </div>
-              {prev && (
-                <div style={s.prevRow}>
-                  <span style={s.prevLabel}>Anterior →</span>
-                  <span style={s.prevValue}>
-                    {prev.carga ? `${prev.carga}kg` : "0kg"} × {prev.reps ? `${prev.reps} reps` : "0 reps"} {prev.series ? `[${prev.series}s]` : "[1s]"} {prev.obs ? `· ${prev.obs}` : ""}
-                  </span>
+
+              {/* Histórico linear anterior completo da sessão passada */}
+              {prev && prev.series && (
+                <div style={s.prevRowDynamic}>
+                  <p style={{ color: "#555", fontWeight: 700, marginBottom: 2 }}>Sessão Anterior:</p>
+                  {prev.series.map((sData, sIdx) => (
+                    <span key={sIdx} style={{ color: "#999", marginRight: 12, display: "inline-block" }}>
+                      [Sé{sIdx + 1}: {sData.carga || "0"}kg × {sData.reps || "0"}{ex.isTimeBased ? "s" : ""}]
+                    </span>
+                  ))}
+                  {prev.obs && <p style={{ color: "#666", fontStyle: "italic", marginTop: 2 }}>Obs antiga: {prev.obs}</p>}
                 </div>
               )}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={s.inputRowThreeCols}>
-                  <div style={s.inputGroup}>
-                    <label style={s.inputLabel}>CARGA (kg)</label>
-                    <input style={s.input} type="number" inputMode="decimal" placeholder={placeholderCarga} value={entries[ex.name]?.carga || ""} onChange={(e) => handleEntry(ex.name, "carga", e.target.value)} autoComplete="off" />
-                  </div>
-                  <div style={s.inputGroup}>
-                    <label style={s.inputLabel}>REPETIÇÕES</label>
-                    <input style={s.input} type="number" inputMode="numeric" placeholder={placeholderReps} value={entries[ex.name]?.reps || ""} onChange={(e) => handleEntry(ex.name, "reps", e.target.value)} autoComplete="off" />
-                  </div>
-                  <div style={s.inputGroup}>
-                    <label style={s.inputLabel}>SÉRIES</label>
-                    <input style={s.input} type="number" inputMode="numeric" placeholder={placeholderSeries} value={entries[ex.name]?.series || ""} onChange={(e) => handleEntry(ex.name, "series", e.target.value)} autoComplete="off" />
-                  </div>
-                </div>
+
+              {/* Renderização das linhas individuais para cada série prevista */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+                {currentEntry.series.map((serie, idx) => {
+                  const prevCarga = prev?.series?.[idx]?.carga || "0";
+                  const prevReps = prev?.series?.[idx]?.reps || ex.repsTarget.split("-")[0];
+
+                  return (
+                    <div key={idx} style={s.serieInputRow}>
+                      <span style={s.serieLabelIndicator}>SÉRIE {idx + 1}</span>
+                      <div style={{ flex: 1, display: "flex", gap: 8 }}>
+                        <input
+                          style={s.input}
+                          type="number"
+                          inputMode="decimal"
+                          placeholder={`${prevCarga} kg`}
+                          value={serie.carga}
+                          onChange={(e) => handleSerieChange(ex.name, idx, "carga", e.target.value)}
+                          autoComplete="off"
+                        />
+                        <input
+                          style={s.input}
+                          type="number"
+                          inputMode="numeric"
+                          placeholder={`${prevReps} ${ex.isTimeBased ? "s" : ""}`}
+                          value={serie.reps}
+                          onChange={(e) => handleSerieChange(ex.name, idx, "reps", e.target.value)}
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
                 <div style={s.inputGroup}>
-                  <label style={s.inputLabel}>OBSERVAÇÃO PERTINENTE</label>
-                  <input style={s.input} type="text" placeholder="ex: boa execução, drop set no final..." value={entries[ex.name]?.obs || ""} onChange={(e) => handleEntry(ex.name, "obs", e.target.value)} autoComplete="off" />
+                  <label style={s.inputLabel}>OBSERVAÇÃO DA SESSÃO</label>
+                  <input
+                    style={s.input}
+                    type="text"
+                    placeholder="ex: boa execução, drop set na última..."
+                    value={currentEntry.obs}
+                    onChange={(e) => handleObsChange(ex.name, e.target.value)}
+                    autoComplete="off"
+                  />
                 </div>
               </div>
             </div>
@@ -431,10 +480,17 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
 }
 
 function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedLog, setExpandedLog, handleDeleteLog, handleExportPDF }: { logs: LogEntry[]; allLogs: LogEntry[]; filterTreino: string; setFilterTreino: (t: string) => void; expandedLog: number | null; setExpandedLog: (id: number | null) => void; handleDeleteLog: (id: number) => void; handleExportPDF: (log: LogEntry) => void }) {
+  
   function renderMiniChart(exerciseName: string) {
+    // Pega a média de carga das séries executadas para montar a linha de evolução histórica
     const historicalData = [...allLogs]
       .reverse()
-      .map((l) => ({ date: formatDate(l.date).slice(0, 5), val: Number(l.exercises[exerciseName]?.carga) || 0 }))
+      .map((l) => {
+        const series = l.exercises[exerciseName]?.series || [];
+        const cargasValidas = series.map(s => Number(s.carga) || 0).filter(v => v > 0);
+        const mediaCarga = cargasValidas.length > 0 ? Math.round(cargasValidas.reduce((a, b) => a + b, 0) / cargasValidas.length) : 0;
+        return { date: formatDate(l.date).slice(0, 5), val: mediaCarga };
+      })
       .filter((d) => d.val > 0)
       .slice(-5);
 
@@ -443,7 +499,7 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
 
     return (
       <div style={s.chartContainer}>
-        <p style={s.chartTitle}>Evolução de Carga (Últimas Sessões)</p>
+        <p style={s.chartTitle}>Evolução Média de Carga (Últimas Sessões)</p>
         <div style={s.chartTrack}>
           {historicalData.map((d, i) => {
             const pct = (d.val / maxCarga) * 100;
@@ -492,16 +548,22 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
                   📄 EXPORTAR RELATÓRIO EM PDF
                 </button>
                 {Object.entries(log.exercises).map(([ex, data]) => {
-                  const carga = data.carga ? `${data.carga}kg` : "0kg";
-                  const reps = data.reps ? `${data.reps} reps` : "0 reps";
-                  const series = data.series ? `[${data.series}s]` : "[1s]";
+                  const isTime = PROTOCOLO_TREINOS[log.treino]?.find(p => p.name === ex)?.isTimeBased;
+                  
+                  // Monta as linhas lineares por série conforme solicitado
+                  const seriesLine = data.series.map((sData, sIdx) => {
+                    const cg = sData.carga ? `${sData.carga}kg` : "0kg";
+                    const rp = sData.reps ? `${sData.reps}${isTime ? "s" : " reps"}` : "0";
+                    return `S${sIdx + 1}: ${cg} × ${rp}`;
+                  }).join(" · ");
+
                   const obsText = data.obs ? ` · (${data.obs})` : "";
                   
                   return (
                     <div key={ex} style={s.logExBlock}>
                       <p style={s.logExNameClean}>{ex.toUpperCase()}</p>
                       <p style={s.logExDataLine}>
-                        {carga} × {reps} {series}{obsText}
+                        {seriesLine}{obsText}
                       </p>
                       {renderMiniChart(ex)}
                     </div>
@@ -582,14 +644,16 @@ const s: Record<string, React.CSSProperties> = {
   prevBanner: { background: "rgba(39, 174, 96, 0.05)", border: "1px solid #27ae60", borderRadius: 6, padding: "10px 14px", fontSize: 12, color: "#4fa34f", marginBottom: 16 },
   exerciseList: { display: "flex", flexDirection: "column", gap: 12 },
   exerciseCard: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "14px 16px" },
-  exHeader: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 },
+  exHeader: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14 },
   exNum: { fontFamily: "'Bebas Neue', cursive", fontSize: 20, color: RED, minWidth: 28 },
   exName: { fontFamily: "'Bebas Neue', cursive", fontSize: 18, color: TEXT },
-  prevRow: { display: "flex", gap: 6, alignItems: "center", marginBottom: 10, fontSize: 11 },
-  prevLabel: { color: "#555" },
-  prevValue: { color: "#999" },
-  inputRowThreeCols: { display: "flex", gap: 8 },
-  inputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: 5 },
+  prevRowDynamic: { background: "#0d0d0d", borderRadius: 4, padding: "6px 10px", fontSize: 11, marginBottom: 12, border: "1px solid #141414" },
+  
+  // Estilos da linha de entrada das séries individuais
+  serieInputRow: { display: "flex", alignItems: "center", gap: 12, background: "#0d0d0d", padding: "6px 10px", borderRadius: 5, border: "1px solid #141414" },
+  serieLabelIndicator: { fontSize: 10, fontFamily: "'Bebas Neue', cursive", color: RED, letterSpacing: 1, minWidth: 55 },
+  
+  inputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: 5, marginTop: 4 },
   inputLabel: { fontSize: 9, color: "#555", fontWeight: 800 },
   input: { background: BG, border: `1px solid ${BORDER}`, borderRadius: 5, color: TEXT, padding: "8px 10px", fontSize: 16, width: "100%", fontWeight: 600 },
   saveBtn: { width: "100%", background: RED, border: "none", borderRadius: 6, color: "#fff", padding: "18px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, cursor: "pointer" },
