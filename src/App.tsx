@@ -372,7 +372,7 @@ function RegisterScreen({ selectedTreino, setSelectedTreino, entries, handleEntr
                 <div style={s.prevRow}>
                   <span style={s.prevLabel}>Anterior →</span>
                   <span style={s.prevValue}>
-                    {prev.carga ? `${prev.carga}kg` : "—"} × {prev.reps || "—"} {prev.series ? ` [${prev.series}s]` : ""}
+                    {prev.carga ? `${prev.carga}kg` : "0kg"} × {prev.reps ? `${prev.reps} reps` : "0 reps"} {prev.series ? `[${prev.series}s]` : "[1s]"}
                   </span>
                 </div>
               )}
@@ -473,8 +473,8 @@ function HistoryScreen({ logs, allLogs, filterTreino, setFilterTreino, expandedL
                   📄 EXPORTAR RELATÓRIO EM PDF
                 </button>
                 {Object.entries(log.exercises).map(([ex, data]) => {
-                  const carga = data.carga ? `${data.carga}kg` : "—";
-                  const reps = data.reps ? `${data.reps} reps` : "—";
+                  const carga = data.carga ? `${data.carga}kg` : "0kg";
+                  const reps = data.reps ? `${data.reps} reps` : "0 reps";
                   const series = data.series ? `[${data.series}s]` : "[1s]";
                   const obsText = data.obs ? ` · (${data.obs})` : "";
                   
@@ -506,6 +506,18 @@ const fonts = `
   body { background: #0a0a0a; overflow-x: hidden; width: 100%; }
   input { outline: none; border: 1px solid #1e1e1e; }
   input:focus { border-color: #c0392b !important; }
+  
+  /* Reset cirúrgico de foco para o Safari do iOS eliminar linhas e bordas fantasmas */
+  button, input, select, textarea {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  button:focus, button:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent;
+  }
 `;
 
 const RED = "#c0392b";
@@ -513,7 +525,7 @@ const BG = "#0a0a0a";
 const CARD = "#111";
 const BORDER = "#1e1e1e";
 const TEXT = "#e8e8e8";
-const MUTED = "#555";
+const MUTED = "#444";
 
 const s: Record<string, React.CSSProperties> = {
   root: { background: BG, minHeight: "100vh", width: "100%", maxWidth: "520px", margin: "0 auto", display: "flex", flexDirection: "column", color: TEXT, fontFamily: "'DM Sans', sans-serif" },
@@ -522,28 +534,34 @@ const s: Record<string, React.CSSProperties> = {
   headerInner: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6 },
   logo: { fontFamily: "'Bebas Neue', cursive", fontSize: 48, color: RED, letterSpacing: 4, lineHeight: 0.9 },
   logoSub: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: TEXT, letterSpacing: 6 },
-  headerCaption: { fontSize: 10, letterSpacing: 3, color: MUTED, marginTop: 6, fontWeight: 700 },
-  nav: { display: "flex", background: "#0d0d0d" },
-  navBtn: { flex: 1, background: "none", border: "none", color: MUTED, padding: "14px 0", fontSize: 12, fontFamily: "'Bebas Neue', cursive", letterSpacing: 2, cursor: "pointer", borderBottom: "3px solid transparent" },
-  navBtnActive: { color: TEXT, borderColor: RED },
+  headerCaption: { fontSize: 10, letterSpacing: 3, color: "#555", marginTop: 6, fontWeight: 700 },
+  
+  // Customização estrita das abas: remove qualquer borda nativa ou residual branca do navegador
+  nav: { display: "flex", background: "#0d0d0d", border: "none", outline: "none" },
+  navBtn: { flex: 1, background: "none", border: "none", outline: "none", color: "#555", padding: "14px 0", fontSize: 12, fontFamily: "'Bebas Neue', cursive", letterSpacing: 2, cursor: "pointer", borderBottom: "3px solid transparent", transition: "all 0.15s ease" },
+  navBtnActive: { color: TEXT, borderBottom: `3px solid ${RED}`, background: "none", outline: "none" },
+  
   contentScroll: { padding: "0 16px 40px 16px", flex: 1, display: "flex", flexDirection: "column" },
   section: { paddingTop: 20, flex: 1, display: "flex", flexDirection: "column" },
   sectionTitle: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, letterSpacing: 3, color: TEXT, marginBottom: 18, borderLeft: `3px solid ${RED}`, paddingLeft: 12 },
   cardGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 },
   treinoCard: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "16px 14px", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 4 },
   treinoCardName: { fontFamily: "'Bebas Neue', cursive", fontSize: 22, color: TEXT },
-  treinoCardSub: { fontSize: 12, color: MUTED },
+  treinoCardSub: { fontSize: 12, color: "#555" },
   treinoCardLast: { fontSize: 10, color: "#27ae60", marginTop: 6, fontWeight: 700 },
   treinoCardNew: { fontSize: 10, color: RED, marginTop: 6, fontWeight: 700 },
   statRow: { display: "flex", gap: 12, marginBottom: 20 },
   statBox: { flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, padding: 16, display: "flex", flexDirection: "column", alignItems: "center" },
   statNum: { fontFamily: "'Bebas Neue', cursive", fontSize: 36, color: RED },
-  statLabel: { fontSize: 10, color: MUTED, textAlign: "center" },
+  statLabel: { fontSize: 10, color: "#555", textAlign: "center" },
   motivBox: { border: `1px solid #1f0808`, borderRadius: 6, padding: "18px 16px", textAlign: "center", background: "#0d0505", marginBottom: 20 },
   motivText: { fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, color: RED },
+  
+  // Customização estrita dos sub-botões de filtro no histórico
   tabRow: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 },
-  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: MUTED, padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer" },
-  tabBtnActive: { background: RED, borderColor: RED, color: "#fff" },
+  tabBtn: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 4, color: "#555", padding: "6px 12px", fontSize: 12, fontFamily: "'Bebas Neue', cursive", cursor: "pointer", outline: "none" },
+  tabBtnActive: { background: RED, borderColor: RED, color: "#fff", outline: "none" },
+  
   dateLabel: { fontSize: 12, color: RED, marginBottom: 12, fontWeight: 800 },
   prevBanner: { background: "rgba(39, 174, 96, 0.05)", border: "1px solid #27ae60", borderRadius: 6, padding: "10px 14px", fontSize: 12, color: "#4fa34f", marginBottom: 16 },
   exerciseList: { display: "flex", flexDirection: "column", gap: 12 },
@@ -552,35 +570,37 @@ const s: Record<string, React.CSSProperties> = {
   exNum: { fontFamily: "'Bebas Neue', cursive", fontSize: 20, color: RED, minWidth: 28 },
   exName: { fontFamily: "'Bebas Neue', cursive", fontSize: 18, color: TEXT },
   prevRow: { display: "flex", gap: 6, alignItems: "center", marginBottom: 10, fontSize: 11 },
-  prevLabel: { color: MUTED },
+  prevLabel: { color: "#555" },
   prevValue: { color: "#999" },
   inputRowThreeCols: { display: "flex", gap: 8 },
   inputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: 5 },
-  inputLabel: { fontSize: 9, color: MUTED, fontWeight: 800 },
+  inputLabel: { fontSize: 9, color: "#555", fontWeight: 800 },
   input: { background: BG, border: `1px solid ${BORDER}`, borderRadius: 5, color: TEXT, padding: "8px 10px", fontSize: 16, width: "100%", fontWeight: 600 },
   saveBtn: { width: "100%", background: RED, border: "none", borderRadius: 6, color: "#fff", padding: "18px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, cursor: "pointer" },
   savedBanner: { background: "rgba(39, 174, 96, 0.1)", border: "1px solid #27ae60", borderRadius: 6, padding: "18px", textAlign: "center", color: "#4fa34f", fontFamily: "'Bebas Neue', cursive", fontSize: 18 },
   emptyState: { textAlign: "center", padding: "80px 0" },
-  emptyText: { color: MUTED, fontSize: 14 },
+  emptyText: { color: "#555", fontSize: 14 },
   emptyHype: { fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: RED },
+  
+  // Estruturas de logs e distanciamento entre Tipo de Treino e Data
   logList: { display: "flex", flexDirection: "column", gap: 10 },
   logCard: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, overflow: "hidden" },
   logHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", cursor: "pointer" },
-  logHeaderFlexContainer: { display: "flex", justifyContent: "space-between", alignItems: "center", width: "90%" },
-  logTreino: { fontFamily: "'Bebas Neue', cursive", fontSize: 20, color: TEXT },
-  logDate: { fontSize: 12, color: MUTED },
-  logChevron: { color: MUTED, fontSize: 12 },
+  logHeaderFlexContainer: { display: "flex", justifyContent: "space-between", alignItems: "center", width: "92%" },
+  logTreino: { fontFamily: "'Bebas Neue', cursive", fontSize: 20, color: TEXT, letterSpacing: "0.5px" },
+  logDate: { fontSize: 12, color: "#666", fontWeight: 500 },
+  logChevron: { color: "#555", fontSize: 12 },
   logDetail: { borderTop: `1px solid ${BORDER}`, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14, background: "#0a0a0a" },
   logExBlock: { borderBottom: "1px solid #141414", paddingBottom: 12, paddingTop: 4 },
   logExNameClean: { fontSize: 12, color: TEXT, fontWeight: 700, marginBottom: 4, letterSpacing: "0.5px" },
   logExDataLine: { fontSize: 12, color: "#b3b3b3", lineHeight: "1.4" },
   pdfExportBtn: { width: "100%", background: "none", border: `1px solid ${RED}`, borderRadius: 6, color: TEXT, padding: "12px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, cursor: "pointer", marginBottom: 6 },
   chartContainer: { marginTop: 10, background: "#0d0d0d", padding: "8px 10px", borderRadius: 4, border: "1px solid #141414" },
-  chartTitle: { fontSize: 9, color: MUTED, textTransform: "uppercase" },
+  chartTitle: { fontSize: 9, color: "#555", textTransform: "uppercase" },
   chartTrack: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 45, gap: 6 },
   chartBarWrap: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end" },
   chartBarNum: { fontSize: 8, color: "#888" },
   chartBarFill: { width: "100%", maxWidth: 20, background: `linear-gradient(180deg, ${RED} 0%, #7f2217 100%)`, borderRadius: "2px 2px 0 0" },
-  chartBarLabel: { fontSize: 8, color: MUTED },
+  chartBarLabel: { fontSize: 8, color: "#555" },
   deleteBtn: { background: "none", border: `1px solid rgba(192,57,43,0.3)`, borderRadius: 4, color: RED, padding: "8px 14px", fontSize: 10, cursor: "pointer", marginTop: 10 },
 };
